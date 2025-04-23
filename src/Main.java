@@ -1,7 +1,9 @@
+import java.util.Scanner;
+
 public class Main {
     public static void main(String[] args) {
-        System.out.println("РЎР»СѓС‡Р°Р№РЅРѕРµ С‡РёСЃР»Рѕ РѕС‚ 0 РґРѕ 1: " +
-                Math.random());
-
+        System.out.println("Введите текст и нажмите <Enter>: ");
+        String text = new Scanner(System.in).nextLine();
+        System.out.println("Длина текста: " + text.length());
     }
 }
