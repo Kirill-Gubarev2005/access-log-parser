@@ -25,37 +25,76 @@ public class Main {
                  BufferedReader reader = new BufferedReader(fileReader)) {
 
                 int lineCount = 0;
-                int maxLength = 0;
-                long minLength = file.length();
+                int googlebotRequests = 0;
+                int yandexbotRequests = 0;
                 String line;
 
                 while ((line = reader.readLine()) != null) {
                     lineCount++;
-                    int length = line.length();
-                    if (length > 1024) {
+                    if (line.length() > 1024) {
                         throw new LongLine("Строка #" + lineCount + " превышает максимально допустимую длину 1024 символа");
                     }
-                    if (length > maxLength) {
-                        maxLength = length;
-                    }
 
-                    if (length < minLength) {
-                        minLength = length;
+                    String userAgent = extractUserAgent(line);
+                    if (userAgent != null) {
+                        String botName = extractBotName(userAgent);
+                        if ("Googlebot".equals(botName)) {
+                            googlebotRequests++;
+                        } else if ("YandexBot".equals(botName)) {
+                            yandexbotRequests++;
+                        }
                     }
                 }
+                if (lineCount > 0) {
+                    double googlebotPercent = (double) googlebotRequests / lineCount * 100;
+                    double yandexbotPercent = (double) yandexbotRequests / lineCount * 100;
 
-                System.out.println("Общее количество строк в файле: " + lineCount);
-                System.out.println("Длина самой длинной строки: " + maxLength);
-                System.out.println("Длина самой короткой строки: " + minLength);
+                    System.out.println("Общее количество строк: " + lineCount);
+                    System.out.println("Строки от Googlebot: "+ googlebotRequests);
+                    System.out.println("Доля Строк от Googlebot: "+ googlebotPercent);
 
+                    System.out.println("Строки от YandexBot: "+ yandexbotRequests);
+                    System.out.println("Доля Строк от от YandexBot: "+ yandexbotPercent);
+
+                }
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
     }
-}
-class LongLine extends RuntimeException {
-    public LongLine(String message) {
-        super(message);
+
+    private static String extractUserAgent(String logLine) {
+        int lastQuoteInd = logLine.lastIndexOf('"');
+        if (lastQuoteInd == -1) return null;
+
+        int secondLastQuoteInd = logLine.lastIndexOf('"', lastQuoteInd - 1);
+        if (secondLastQuoteInd == -1) return null;
+
+        return logLine.substring(secondLastQuoteInd + 1, lastQuoteInd);
+    }
+
+    private static String extractBotName(String userAgent) {
+        int openBracket = userAgent.indexOf('(');
+        if (openBracket == -1) return null;
+
+        int closeBracket = userAgent.indexOf(')', openBracket);
+        if (closeBracket == -1) return null;
+
+        String firstBrackets = userAgent.substring(openBracket + 1, closeBracket);
+        String[] parts = firstBrackets.split(";");
+        if (parts.length >= 2) {
+            String fragment = parts[1].trim();
+            int slashIndex = fragment.indexOf('/');
+            if (slashIndex != -1) {
+                return fragment.substring(0, slashIndex).trim();
+            }
+        }
+        return null;
+    }
+
+    static class LongLine extends RuntimeException {
+        public LongLine(String message) {
+            super(message);
+        }
     }
 }
