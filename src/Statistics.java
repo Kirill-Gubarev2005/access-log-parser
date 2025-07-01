@@ -14,6 +14,9 @@ public class Statistics {
     private final HashSet<String> notBotIp= new HashSet<>();
     private int nonBotVisits = 0;
     private int errorRequests = 0;
+    private final HashMap<Integer, Integer> visitsPerSecond = new HashMap<>();
+    private final HashMap<String, Integer> visitsPerUser = new HashMap<>();
+    private final HashSet<String> referringDomains = new HashSet<>();
 
     public Statistics() {}
 
@@ -46,10 +49,19 @@ public class Statistics {
         if (!userAgent.isBot()) {
             nonBotVisits++;
             notBotIp.add(entry.getIpAddress());
+            int second = entry.getTime().getSecond();
+            visitsPerSecond.put(second, visitsPerSecond.getOrDefault(second, 0) + 1);
+            visitsPerUser.put(entry.getIpAddress(), visitsPerUser.getOrDefault(entry.getIpAddress(), 0) + 1);
         }
 
         if (entry.getResponseCode() >= 400) {
             errorRequests++;
+        }
+        if (entry.getReferer() != null && !entry.getReferer().isEmpty()) {
+            String domain = extractDomain(entry.getReferer());
+            if (domain != null) {
+                referringDomains.add(domain);
+            }
         }
     }
 
@@ -120,6 +132,32 @@ public class Statistics {
 
         return (double) nonBotVisits / notBotIp.size();
     }
+
+    public int getPeakVisitsPerSecond() {
+        return visitsPerSecond.values().stream().max(Integer::compare).orElse(0);
+    }
+
+    public HashSet<String> getReferringDomains() {
+        return new HashSet<>(referringDomains);
+    }
+
+    public int getMaxVisitsPerUser() {
+        return visitsPerUser.values().stream().max(Integer::compare).orElse(0);
+    }
+
+    private String extractDomain(String url) {
+        try {
+            url = url.replaceFirst("^(https?://)?(www\\.)?", "");
+            int slashIndex = url.indexOf('/');
+            if (slashIndex != -1) {
+                url = url.substring(0, slashIndex);
+            }
+            return url;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public double getTrafficRate() {
         if (minTime == null || maxTime == null || minTime.equals(maxTime)) {
             return 0.0;
