@@ -11,7 +11,9 @@ public class Statistics {
     private final HashSet<String> missPages = new HashSet<>();
     private final HashMap<String, Integer> osStats = new HashMap<>();
     private final HashMap<String, Integer> browserStats = new HashMap<>();
-
+    private final HashSet<String> notBotIp= new HashSet<>();
+    private int nonBotVisits = 0;
+    private int errorRequests = 0;
 
     public Statistics() {}
 
@@ -25,12 +27,12 @@ public class Statistics {
             missPages.add(entry.getPath());
         }
 
-        UserAgent userAgent1 = new UserAgent(entry.getUserAgent());
-        String os = userAgent1.getOs();
+        UserAgent userAgent = new UserAgent(entry.getUserAgent());
+
+        String os = userAgent.getOs();
         osStats.put(os, osStats.getOrDefault(os, 0) + 1);
 
-        UserAgent userAgent2 = new UserAgent(entry.getUserAgent());
-        String browser = userAgent2.getBrowser();
+        String browser = userAgent.getBrowser();
         browserStats.put(browser, browserStats.getOrDefault(browser, 0) + 1);
 
         totalTraffic += entry.getDataSize();
@@ -40,6 +42,14 @@ public class Statistics {
         }
         if (maxTime == null || entryTime.isAfter(maxTime)) {
             maxTime = entryTime;
+        }
+        if (!userAgent.isBot()) {
+            nonBotVisits++;
+            notBotIp.add(entry.getIpAddress());
+        }
+
+        if (entry.getResponseCode() >= 400) {
+            errorRequests++;
         }
     }
 
@@ -78,6 +88,37 @@ public class Statistics {
             result.put(browser, percentage);
         }
         return result;
+    }
+    public double getAverageVisitsPerHour() {
+        if (minTime == null || maxTime == null || nonBotVisits == 0) {
+            return 0.0;
+        }
+
+        long hours = Duration.between(minTime, maxTime).toHours();
+        if (hours == 0) {
+            return nonBotVisits;
+        }
+
+        return (double) nonBotVisits / hours;
+    }
+    public double getAverageErrorsPerHour() {
+        if (minTime == null || maxTime == null || errorRequests == 0) {
+            return 0.0;
+        }
+
+        long hours = Duration.between(minTime, maxTime).toHours();
+        if (hours == 0) {
+            return errorRequests;
+        }
+
+        return (double) errorRequests / hours;
+    }
+    public double getAverageVisitsPerUser() {
+        if (notBotIp.isEmpty() || nonBotVisits == 0) {
+            return 0.0;
+        }
+
+        return (double) nonBotVisits / notBotIp.size();
     }
     public double getTrafficRate() {
         if (minTime == null || maxTime == null || minTime.equals(maxTime)) {

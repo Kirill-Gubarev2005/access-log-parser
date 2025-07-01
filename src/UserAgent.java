@@ -1,10 +1,12 @@
 public class UserAgent {
     private final String os;
     private final String browser;
+    private final boolean isBot;
 
     public UserAgent(String userAgentString) {
         this.os = parseOperatingSystem(userAgentString);
         this.browser = parseBrowser(userAgentString);
+        this.isBot = checkIfBot(userAgentString);
     }
 
     private String parseOperatingSystem(String userAgent) {
@@ -50,6 +52,15 @@ public class UserAgent {
             return "Other";
         }
     }
+    private boolean checkIfBot(String userAgent) {
+        if (userAgent == null || userAgent.isEmpty() || userAgent.equals("-")) {
+            return false;
+        }
+
+        String userAgentLower = userAgent.toLowerCase();
+
+        return userAgent.toLowerCase().contains("bot");
+    }
 
     public String getOs() {
         return os;
@@ -57,5 +68,8 @@ public class UserAgent {
 
     public String getBrowser() {
         return browser;
+    }
+    public boolean isBot() {
+        return isBot;
     }
 }

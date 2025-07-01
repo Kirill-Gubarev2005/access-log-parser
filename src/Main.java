@@ -60,9 +60,9 @@ public class Main {
 
                     System.out.println("Общее количество строк: " + lineCount);
                     System.out.println("Строки от Googlebot: " + googlebotRequests);
-                    System.out.printf("Доля строк от Googlebot: ", googlebotPercent);
+                    System.out.println("Доля строк от Googlebot: "+ googlebotPercent);
                     System.out.println("Строки от YandexBot: " + yandexbotRequests);
-                    System.out.printf("Доля строк от YandexBot: ", yandexbotPercent);
+                    System.out.println("Доля строк от YandexBot: "+ yandexbotPercent);
                     System.out.println("Общий объём трафика: " + statistics.getTotalTraffic() + " байт");
                     System.out.println("Средний трафик в минуту: "+ trafficRatePerMinute);
                 }
