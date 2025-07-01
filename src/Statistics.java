@@ -8,7 +8,10 @@ public class Statistics {
     private LocalDateTime minTime = null;
     private LocalDateTime maxTime = null;
     private final HashSet<String> pages = new HashSet<>();
+    private final HashSet<String> missPages = new HashSet<>();
     private final HashMap<String, Integer> osStats = new HashMap<>();
+    private final HashMap<String, Integer> browserStats = new HashMap<>();
+
 
     public Statistics() {}
 
@@ -18,9 +21,17 @@ public class Statistics {
         if (entry.getResponseCode() == 200) {
             pages.add(entry.getPath());
         }
-        UserAgent userAgent = new UserAgent(entry.getUserAgent());
-        String os = userAgent.getOs();
+        if (entry.getResponseCode() == 404) {
+            missPages.add(entry.getPath());
+        }
+
+        UserAgent userAgent1 = new UserAgent(entry.getUserAgent());
+        String os = userAgent1.getOs();
         osStats.put(os, osStats.getOrDefault(os, 0) + 1);
+
+        UserAgent userAgent2 = new UserAgent(entry.getUserAgent());
+        String browser = userAgent2.getBrowser();
+        browserStats.put(browser, browserStats.getOrDefault(browser, 0) + 1);
 
         totalTraffic += entry.getDataSize();
         LocalDateTime entryTime = entry.getTime();
@@ -35,6 +46,10 @@ public class Statistics {
     public HashSet<String> getAllPages() {
         return new HashSet<>(pages);
     }
+    public HashSet<String> getAllMissedPages() {
+        return new HashSet<>(missPages);
+    }
+
 
     public HashMap<String, Double> getOsStatistics() {
         HashMap<String, Double> result = new HashMap<>();
@@ -47,6 +62,20 @@ public class Statistics {
             int count = entry.getValue();
             double percentage = (double) count / total;
             result.put(os, percentage);
+        }
+        return result;
+    }
+    public HashMap<String, Double> getBrowserStatistics() {
+        HashMap<String, Double> result = new HashMap<>();
+        int total = 0;
+        for (Integer count : browserStats.values()) {
+            total += count;
+        }
+        for (HashMap.Entry<String, Integer> entry : browserStats.entrySet()) {
+            String browser = entry.getKey();
+            int count = entry.getValue();
+            double percentage = (double) count / total;
+            result.put(browser, percentage);
         }
         return result;
     }
